@@ -13,26 +13,17 @@ def log_text(text):
 
 def cert_bytes(cert_file_name):
     """
-    Parses a pem certificate file into raw bytes and appends null character.
+    Parses a pem certificate file into raw bytes.
     """
     with open(cert_file_name, "rb") as pem:
-        chars = []
-        for c in pem.read():
-            chars.append(ord(c))
-        # mbedtls demands null-terminated certs
-        chars.append(0)
-        return chars
-
+        return list(pem.read())
 
 def quote_bytes(quote_file_name):
     """
     Parses a binary quote file into raw bytes.
     """
     with open(quote_file_name, "rb") as quote:
-        chars = []
-        for c in quote.read():
-            chars.append(ord(c))
-        return chars
+        return list(quote.read())
 
 def reset_workspace():
     os.system("sudo pkill cchost")
@@ -141,8 +132,8 @@ def connect_remote_node(info):
         return False
 
 def get_light_node_info():
-    node_address_2 = str(raw_input("Remote node IP address: "))
-    node_user_2 = str(raw_input("Remote node IP username: "))
+    node_address_2 = str(input("Remote node IP address: "))
+    node_user_2 = str(input("Remote node IP username: "))
     node_pwd_2 = getpass.getpass()
 
     return {
@@ -152,12 +143,12 @@ def get_light_node_info():
     }
 
 def get_node_info():
-    node_address_1 = str(raw_input("Local node IP address: "))
-    node_address_2 = str(raw_input("Remote node IP address: "))
-    node_user_2 = str(raw_input("Remote node IP username: "))
+    node_address_1 = str(input("Local node IP address: "))
+    node_address_2 = str(input("Remote node IP address: "))
+    node_user_2 = str(input("Remote node IP username: "))
     node_pwd_2 = getpass.getpass()
-    raft_port = str(raw_input("Raft port: "))
-    tls_port = str(raw_input("TLS port: "))
+    raft_port = str(input("Raft port: "))
+    tls_port = str(input("TLS port: "))
 
     return {
         "node_address_1": node_address_1,
@@ -230,9 +221,7 @@ def run(args=None):
 
             log_text("Connecting remote node to blockchain ...")
             c.exec_command("cd ~/CCF/build && ./genesisgenerator joinrpc --network-cert=./networkcert.pem --host=" + info["node_address_1"] + " --port=" + info["tls_port"])
-            #print("cd ~/CCF/build && ./genesisgenerator joinrpc --network-cert=./1.pem --host=" + info["node_address_1"] + " --port=" + info["tls_port"])
-            c.exec_command("cd ~/CCF/build && ./client --host=" + info["node_address_2"] + " --port=" + info["tls_port"] + " --ca=./1.pem joinnetwork --req=joinNetwork.json")
-            #print("./client --host=" + info["node_address_2"] + " --port=" + info["tls_port"] + " --ca=./1.pem joinnetwork --req=joinNetwork.json")
+            c.exec_command("cd ~/CCF/build && ./client --host=" + info["node_address_2"] + " --port=" + info["tls_port"] + " --ca=./1.pem joinnetwork --req=@joinNetwork.json")
             log_text("Done.")
             
             log_text("Network online, setup complete.")
@@ -242,10 +231,13 @@ def run(args=None):
         os.system("cd ~/CCF/build  && rm -rf tx0* gov* *.pem quote* nodes.json startNetwork.json joinNetwork.json 0 parsed_* sealed_*")
 
 if __name__ == "__main__":
-    if sys.argv[1] == "run":
-        run()
-    elif sys.argv[1] == "clean":
-        reset_workspaces()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "run":
+            run()
+        elif sys.argv[1] == "clean":
+            reset_workspaces()
+        else:
+            print("Unknown option")
     else:
         print("How to use the script : ")
         print("-> python network.py run : launch the sample network")
